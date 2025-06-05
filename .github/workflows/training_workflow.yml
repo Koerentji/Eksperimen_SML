@@ -7,37 +7,42 @@ on:
 jobs:
   train-model:
     runs-on: ubuntu-latest
+    
+    # Menetapkan shell default untuk semua langkah 'run' di job ini
+    # 'bash -l {0}' memastikan shell login digunakan, yang akan memuat konfigurasi Conda
+    defaults:
+      run:
+        shell: bash -l {0}
 
     steps:
-    # Langkah 1: Checkout kode dari repositori (tidak berubah)
+    # 1. Checkout kode
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # Langkah 2: Setup environment Python (tidak berubah)
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    # Langkah 3: Setup Conda (Langkah Tambahan Penting!)
-    # Langkah ini akan menginisialisasi shell agar mengenali perintah 'conda'
+    # 2. Setup Conda
+    # Action ini sekarang akan menginisialisasi shell untuk semua langkah berikutnya
     - name: Setup Conda
       uses: conda-incubator/setup-miniconda@v3
       with:
+        # Secara otomatis membuat dan mengaktifkan environment dari file conda.yaml kita
+        activate-environment: airline-satisfaction-ci # Nama env dari conda.yaml
+        environment-file: MLProject/conda.yaml     # Path ke file conda.yaml
+        python-version: "3.10"                     # Pastikan versi python konsisten
         auto-update-conda: true
-        python-version: '3.10'
 
-    # Langkah 4: Install dependensi (tidak berubah)
-    - name: Install Python dependencies
+    # 3. (Opsional) Verifikasi Instalasi
+    # Langkah ini untuk memastikan conda dan mlflow terinstal di environment yang benar
+    - name: Display versions
       run: |
-        pip install mlflow
+        conda --version
+        mlflow --version
 
-    # Langkah 5: Jalankan MLflow Project (tidak berubah)
-    # Sekarang MLflow bisa menjalankan 'conda activate' karena shell sudah diinisialisasi
+    # 4. Jalankan MLflow Project
+    # Sekarang, mlflow dijalankan di dalam shell yang sudah memiliki environment conda yang aktif
     - name: Run MLflow project
       run: mlflow run MLProject
 
-    # Langkah 6: Simpan artefak MLflow (tidak berubah)
+    # 5. Simpan Artefak
     - name: Upload MLflow artifacts
       uses: actions/upload-artifact@v4
       with:
